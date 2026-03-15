@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {userId}
+    // Fields: uid, email, displayName, createdAt
+    //
+    // Collection: users/{userId}/lifestyle
+    // Document ID: current
+    // Fields: transportType, dietType, electricityUsage, plasticUsage, shoppingHabits, travelFrequency, updatedAt
+    //
+    // Collection: users/{userId}/scores
+    // Document ID: current
+    // Fields: carbonScore, wasteScore, energyScore, sustainabilityScore, updatedAt
+    //
+    // Collection: users/{userId}/recommendations
+    // Document ID: current
+    // Fields: suggestions, updatedAt
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly(['uid', 'email', 'displayName', 'createdAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.email is string &&
+             (data.displayName == null || data.displayName is string);
+    }
+
+    function isValidLifestyle(data) {
+      return data.keys().hasOnly(['transportType', 'dietType', 'electricityUsage', 'plasticUsage', 'shoppingHabits', 'travelFrequency', 'updatedAt']) &&
+             data.transportType in ['car', 'bike', 'public_transport', 'walking'] &&
+             data.dietType in ['vegetarian', 'non-vegetarian', 'vegan'] &&
+             data.electricityUsage is number &&
+             data.plasticUsage in ['low', 'medium', 'high'] &&
+             data.shoppingHabits in ['minimal', 'average', 'frequent'] &&
+             data.travelFrequency is number;
+    }
+
+    function isValidScore(data) {
+      return data.keys().hasOnly(['carbonScore', 'wasteScore', 'energyScore', 'sustainabilityScore', 'updatedAt']) &&
+             data.carbonScore is number &&
+             data.wasteScore is number &&
+             data.energyScore is number &&
+             data.sustainabilityScore is number;
+    }
+
+    function isValidRecommendation(data) {
+      return data.keys().hasOnly(['suggestions', 'updatedAt']) &&
+             data.suggestions is list;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+
+      match /lifestyle/current {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidLifestyle(request.resource.data);
+      }
+
+      match /scores/current {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidScore(request.resource.data);
+      }
+
+      match /recommendations/current {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidRecommendation(request.resource.data);
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

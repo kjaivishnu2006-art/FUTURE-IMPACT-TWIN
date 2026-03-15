@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "LifestyleData": {
+      "title": "LifestyleData",
+      "description": "User's lifestyle habits",
+      "type": "object",
+      "properties": {
+        "transportType": { "type": "string", "enum": ["car", "bike", "public_transport", "walking"] },
+        "dietType": { "type": "string", "enum": ["vegetarian", "non-vegetarian", "vegan"] },
+        "electricityUsage": { "type": "number", "description": "Monthly kWh" },
+        "plasticUsage": { "type": "string", "enum": ["low", "medium", "high"] },
+        "shoppingHabits": { "type": "string", "enum": ["minimal", "average", "frequent"] },
+        "travelFrequency": { "type": "number", "description": "Flights per year" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ImpactScore": {
+      "title": "ImpactScore",
+      "description": "Calculated environmental impact scores",
+      "type": "object",
+      "properties": {
+        "carbonScore": { "type": "number" },
+        "wasteScore": { "type": "number" },
+        "energyScore": { "type": "number" },
+        "sustainabilityScore": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Recommendation": {
+      "title": "Recommendation",
+      "description": "AI generated sustainability suggestions",
+      "type": "object",
+      "properties": {
+        "suggestions": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{userId}/lifestyle/current": {
+      "schema": "LifestyleData",
+      "description": "Current lifestyle habits"
+    },
+    "/users/{userId}/scores/current": {
+      "schema": "ImpactScore",
+      "description": "Current impact scores"
+    },
+    "/users/{userId}/recommendations/current": {
+      "schema": "Recommendation",
+      "description": "Current AI recommendations"
+    }
+  }
+}
